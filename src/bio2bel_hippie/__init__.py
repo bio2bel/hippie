@@ -20,6 +20,12 @@ from bio2bel.manager.bel_manager import BELManagerMixin
 from bio2bel.manager.flask_manager import FlaskMixin
 from pybel import BELGraph
 
+__all__ = [
+    'Manager',
+    'Protein',
+    'Interaction',
+]
+
 logger = logging.getLogger(__name__)
 
 MODULE = 'hippie'
