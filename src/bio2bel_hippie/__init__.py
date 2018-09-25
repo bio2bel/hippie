@@ -62,11 +62,14 @@ class Protein(Base):
     entrez_id = Column(String, nullable=False, index=True, unique=True)
     uniprot_id = Column(String, nullable=True)
 
-    def as_pybel(self) -> pybel.dsl.protein:
+    def as_pybel(self) -> Optional[pybel.dsl.protein]:
         """Serializes this protein as a protein."""
+        if not self.uniprot_id:
+            logger.debug('no uniprot id for %d %s', self.id, self.entrez_id)
+            return
         return pybel.dsl.protein(
-            namespace='ncbigene',
-            name=self.entrez_id,
+            namespace='uniprot',
+            name=self.uniprot_id,
         )
 
     def __repr__(self):
@@ -93,13 +96,16 @@ class Interaction(Base):
     # TODO parse sources
     # sources = ...
 
-    def add_to_bel_graph(self, graph: BELGraph) -> None:
+    def add_to_bel_graph(self, graph: BELGraph) -> bool:
         """Add this interaction to a BEL graph as a complex abundance."""
-        node = pybel.dsl.ComplexAbundance([
-            self.source.as_pybel(),
-            self.target.as_pybel(),
-        ])
+        source_dsl = self.source.as_pybel()
+        target_dsl = self.target.as_pybel()
+        if source_dsl is None or target_dsl is None:
+            return False
+
+        node = pybel.dsl.ComplexAbundance([source_dsl, target_dsl])
         graph.add_node_from_data(node)
+        return True
 
 
 class Manager(AbstractManager, BELManagerMixin, FlaskMixin):
