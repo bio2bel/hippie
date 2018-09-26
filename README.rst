@@ -15,7 +15,7 @@ or from the latest code on `GitHub <https://github.com/bio2bel/hippie>`_ with:
 
 .. code-block:: sh
 
-    $ python3 -m pip install git+https://github.com/bio2bel/hippie.git@master
+    $ python3 -m pip install git+https://github.com/bio2bel/hippie.git
 
 .. |build| image:: https://travis-ci.com/bio2bel/hippie.svg?branch=master
     :target: https://travis-ci.com/bio2bel/hippie
@@ -25,8 +25,8 @@ or from the latest code on `GitHub <https://github.com/bio2bel/hippie>`_ with:
     :target: https://codecov.io/gh/bio2bel/hippie?branch=master
     :alt: Coverage Status
 
-.. |docs| image:: http://readthedocs.org/projects/bio2bel-hippie/badge/?version=latest
-    :target: http://bio2bel.readthedocs.io/projects/hippie/en/latest/?badge=latest
+.. |docs| image:: https://readthedocs.org/projects/bio2bel-hippie/badge/?version=latest
+    :target: https://bio2bel.readthedocs.io/projects/hippie/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. |python_versions| image:: https://img.shields.io/pypi/pyversions/bio2bel_hippie.svg
