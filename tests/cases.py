@@ -19,7 +19,7 @@ from bio2bel_hippie import Manager
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 TEST_HIPPIE_URL = os.path.join(HERE, 'hippie_test.txt')
-TEST_UNIPROT_URL = os.path.join(HERE, 'uniprot_test.txt')
+TEST_UNIPROT_URL = os.path.join(HERE, 'uniprot_test.tsv')
 
 
 class TemporaryCacheClassMixin(AbstractTemporaryCacheClassMixin):
