@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Test cases for Bio2BEL HIPPIE.
+r"""Test cases for Bio2BEL HIPPIE.
 
 To generate the uniprot test data, run:
 
