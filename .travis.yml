@@ -26,7 +26,6 @@ jobs:
       env: TOXENV=py
 matrix:
   allow_failures:
-      - env: TOXENV=flake8
       - env: TOXENV=vulture
       - env: TOXENV=mypy
       - env: TOXENV=pyroma
