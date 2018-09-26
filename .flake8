@@ -22,6 +22,7 @@ max-line-length = 120
 # flake8-import-order
 application-import-names =
     bio2bel_hippie
+    bio2bel_uniprot
     bio2bel
     pybel
     tests

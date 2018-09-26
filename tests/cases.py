@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 
-"""Test cases for Bio2BEL HIPPIE."""
+"""Test cases for Bio2BEL HIPPIE.
+
+To generate the uniprot test data, run:
+
+>>> import pandas as pd
+>>> import bio2bel_uniprot
+>>> hdf = pd.read_csv('hippie_test.txt', sep='\t', header=None)
+>>> proteins= set(hdf[0]) | set(hdf[2])
+>>> udf = bio2bel_uniprot.get_mappings_df()
+>>> udf[udf[1].isin(proteins)].to_csv('uniprot_test.tsv', sep='\t', index=None, header=None)
+"""
 
 import os
 
@@ -20,4 +30,4 @@ class TemporaryCacheClassMixin(AbstractTemporaryCacheClassMixin):
     @classmethod
     def populate(cls):
         """Populate the test HIPPIE database."""
-        cls.manager.populate(url=TEST_HIPPIE_URL)
+        cls.manager.populate(url=TEST_HIPPIE_URL, uniprot_url=TEST_UNIPROT_URL)

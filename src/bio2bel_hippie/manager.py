@@ -12,6 +12,7 @@ from tqdm import tqdm
 from bio2bel import AbstractManager
 from bio2bel.manager.bel_manager import BELManagerMixin
 from bio2bel.manager.flask_manager import FlaskMixin
+from bio2bel_uniprot import get_slim_mappings_df
 from pybel import BELGraph
 from .constants import MODULE
 from .models import Base, Interaction, Protein
@@ -50,8 +51,17 @@ class Manager(AbstractManager, BELManagerMixin, FlaskMixin):
             interactions=self.count_interactions(),
         )
 
-    def populate(self, url: Optional[str] = None) -> None:
+    def populate(self, url: Optional[str] = None, uniprot_url: Optional[str] = None) -> None:
         """Populate the database."""
+        print('get uniprot mappings')
+        up_mappings_df = get_slim_mappings_df(url=uniprot_url)
+        up_id_to_up_acc = {}
+        up_id_to_tax_id = {}
+        for idx, (up_acc, up_id, tax_id) in up_mappings_df[['UniProtKB-AC', 'UniProtKB-ID', 'NCBI-Taxon']].iterrows():
+            up_id_to_up_acc[up_id] = up_acc
+            up_id_to_tax_id[up_id] = tax_id
+
+        print('get hippie')
         df = get_df(url=url)
 
         entrez_protein = {
@@ -61,7 +71,7 @@ class Manager(AbstractManager, BELManagerMixin, FlaskMixin):
 
         i = itt.chain(
             df[['source_uniprot_id', 'source_entrez_id']].iterrows(),
-            df[['target_uniprot_id', 'target_entrez_id']].iterrows()
+            df[['target_uniprot_id', 'target_entrez_id']].iterrows(),
         )
 
         for idx, (uniprot_id, entrez_id) in tqdm(i, total=(2 * len(df.index)), desc='proteins'):
@@ -70,6 +80,8 @@ class Manager(AbstractManager, BELManagerMixin, FlaskMixin):
                 entrez_protein[entrez_id] = Protein(
                     entrez_id=entrez_id,
                     uniprot_id=uniprot_id,
+                    uniprot_accession=up_id_to_up_acc.get(uniprot_id),
+                    taxonomy_id=up_id_to_tax_id.get(uniprot_id),
                 )
 
         logger.info('committing protein models')

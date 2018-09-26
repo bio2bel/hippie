@@ -30,6 +30,8 @@ class Protein(Base):
 
     entrez_id = Column(String, nullable=False, index=True, unique=True)
     uniprot_id = Column(String, nullable=True)
+    uniprot_accession = Column(String, nullable=True)
+    taxonomy_id = Column(String)
 
     def as_pybel(self) -> Optional[pybel.dsl.protein]:
         """Serialize as a PyBEL protein."""
