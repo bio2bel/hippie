@@ -24,13 +24,13 @@ jobs:
     - env: TOXENV=docs
 matrix:
   allow_failures:
-      - env: TOXENV=vulture
-      - env: TOXENV=mypy
-      - env: TOXENV=xenon
+    - env: TOXENV=vulture
+    - env: TOXENV=mypy
+    - env: TOXENV=xenon
 install:
-    - sh -c 'if [ "$TOXENV" = "py" ]; then pip install tox codecov; else pip install tox; fi'
+  - sh -c 'if [ "$TOXENV" = "py" ]; then pip install tox codecov; else pip install tox; fi'
 script:
-- tox
+  - tox
 after_success:
     - sh -c 'if [ "$TOXENV" = "py" ]; then tox -e coverage-report; codecov; fi'
 notifications:
