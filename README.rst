@@ -1,5 +1,5 @@
-Bio2BEL HIPPIE |build| |coverage| |docs|
-========================================
+Bio2BEL HIPPIE |build| |coverage| |docs| |zenodo|
+=================================================
 Converts protein-protein interactions in HIPPIE to BEL.
 
 Installation |pypi_version| |python_versions| |pypi_license|
@@ -37,3 +37,6 @@ or from the latest code on `GitHub <https://github.com/bio2bel/hippie>`_ with:
 
 .. |pypi_license| image:: https://img.shields.io/pypi/l/bio2bel_hippie.svg
     :alt: MIT License
+
+.. |zenodo| image:: https://zenodo.org/badge/150231675.svg
+   :target: https://zenodo.org/badge/latestdoi/150231675
