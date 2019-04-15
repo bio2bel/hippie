@@ -26,9 +26,10 @@ logger = logging.getLogger(__name__)
 
 
 class Manager(AbstractManager, BELManagerMixin, FlaskMixin):
-    """Manager for HIPPIE."""
+    """Protein-protein physical interactions."""
 
     module_name = MODULE
+    edge_model = Interaction
     _base = Base
     flask_admin_models = [Protein, Interaction]
 
