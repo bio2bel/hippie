@@ -23,6 +23,7 @@ max-line-length = 120
 application-import-names =
     bio2bel_hippie
     bio2bel_uniprot
+    bio2bel_hgnc
     bio2bel
     pybel
     tests

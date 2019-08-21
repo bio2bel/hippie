@@ -28,21 +28,48 @@ class Protein(Base):
     __tablename__ = PROTEIN_TABLE_NAME
     id = Column(Integer, primary_key=True)
 
-    symbol = Column(String, nullable=True, index=True)
-    hgnc_id = Column(String, nullable=True, index=True)
-    entrez_id = Column(String, nullable=False, index=True, unique=True)
     uniprot_id = Column(String, nullable=True)
-    uniprot_accession = Column(String, nullable=True)
+    uniprot_entry_name = Column(String, nullable=True)
+    entrez_id = Column(String, nullable=False, index=True, unique=True)
     taxonomy_id = Column(String)
 
-    def as_pybel(self) -> Optional[pybel.dsl.protein]:
+    symbol = Column(String, nullable=True, index=True)
+    hgnc_id = Column(String, nullable=True, index=True)
+
+    def as_bel(self, namespace: Optional[str] = None) -> Optional[pybel.dsl.Protein]:
         """Serialize as a PyBEL protein."""
-        if not self.uniprot_id:
-            logger.debug('no uniprot id for %d %s', self.id, self.entrez_id)
+        if namespace == 'hgnc':
+            return self.as_bel_hgnc()
+        if namespace == 'ncbigene':
+            return self.as_bel_entrez()
+        if namespace is None or namespace == 'uniprot':
+            return self.as_bel_uniprot()
+        raise ValueError(f'Invalid namespace: {namespace}')
+
+    def as_bel_entrez(self) -> pybel.dsl.Protein:
+        """Serialize as a PyBEL protein using the Entrez Gene namespace."""
+        return pybel.dsl.Protein(
+            namespace='ncbigene',
+            name=self.symbol,
+            identifier=self.entrez_id,
+        )
+
+    def as_bel_hgnc(self) -> Optional[pybel.dsl.Protein]:
+        """Serialize as a PyBEL protein using the HGNC namespace."""
+        if not self.hgnc_id:
             return
-        return pybel.dsl.protein(
+        return pybel.dsl.Protein(
+            namespace='hgnc',
+            name=self.symbol,
+            identifier=self.hgnc_id,
+        )
+
+    def as_bel_uniprot(self) -> pybel.dsl.Protein:
+        """Serialize as a PyBEL protein using the UniProt namespace."""
+        return pybel.dsl.Protein(
             namespace='uniprot',
-            name=self.uniprot_id,
+            name=self.uniprot_entry_name,
+            identifier=self.uniprot_id,
         )
 
     def __repr__(self):  # noqa: D105
@@ -69,10 +96,10 @@ class Interaction(Base):
     # TODO parse sources
     # sources = ...
 
-    def add_to_bel_graph(self, graph: BELGraph) -> bool:
+    def add_to_bel_graph(self, graph: BELGraph, namespace: Optional[str] = None) -> bool:
         """Add this interaction to a BEL graph as a complex abundance."""
-        source_dsl = self.source.as_pybel()
-        target_dsl = self.target.as_pybel()
+        source_dsl = self.source.as_bel(namespace=namespace)
+        target_dsl = self.target.as_bel(namespace=namespace)
         if source_dsl is None or target_dsl is None:
             return False
 

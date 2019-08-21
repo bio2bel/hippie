@@ -7,16 +7,15 @@ import logging
 import time
 from typing import Mapping, Optional
 
-from pybel import BELGraph
 from tqdm import tqdm
 
 from bio2bel import AbstractManager
 from bio2bel.manager.bel_manager import BELManagerMixin
 from bio2bel.manager.flask_manager import FlaskMixin
-from bio2bel_uniprot import get_slim_mappings_df
+from pybel import BELGraph
 from .constants import MODULE
 from .models import Base, Interaction, Protein
-from .parser import get_df
+from .parser import get_df_preprocessed
 
 __all__ = [
     'Manager',
@@ -54,50 +53,41 @@ class Manager(AbstractManager, BELManagerMixin, FlaskMixin):
 
     def populate(self, url: Optional[str] = None, uniprot_url: Optional[str] = None) -> None:
         """Populate the database."""
-
-        up_mappings_df = get_slim_mappings_df(url=uniprot_url)
-        up_id_to_up_acc = {}
-        up_id_to_tax_id = {}
-        for idx, (up_acc, up_id, tax_id) in up_mappings_df[['UniProtKB-AC', 'UniProtKB-ID', 'NCBI-Taxon']].iterrows():
-            up_id_to_up_acc[up_id] = up_acc
-            up_id_to_tax_id[up_id] = tax_id
-
         logger.info('Getting HIPPIE data')
-        df = get_df(url=url)
+        df = get_df_preprocessed(url=url)
 
-        entrez_protein = {
-            protein.entrez_id: Protein
-            for protein in self.session.query(Protein)
-        }
+        protein_tuples = set(map(tuple, itt.chain(
+            df[['source_uniprot_id', 'source_uniprot_entry_name', 'source_entrez_id', 'source_tax_id', 'source_hgnc_id',
+                'source_hgnc_symbol']].values,
+            df[['target_uniprot_id', 'target_uniprot_entry_name', 'target_entrez_id', 'target_tax_id', 'target_hgnc_id',
+                'target_hgnc_symbol']].values,
+        )))
 
-        i = itt.chain(
-            df[['source_uniprot_id', 'source_entrez_id']].iterrows(),
-            df[['target_uniprot_id', 'target_entrez_id']].iterrows(),
-        )
-
-        # TODO reagon either map uniprot id or entrez id to HGNC and add it to protein model
-
-        for idx, (uniprot_id, entrez_id) in tqdm(i, total=(2 * len(df.index)), desc='proteins'):
-            protein = entrez_protein.get(entrez_id)
-            if protein is None:
-                entrez_protein[entrez_id] = Protein(
-                    entrez_id=entrez_id,
-                    uniprot_id=uniprot_id,
-                    uniprot_accession=up_id_to_up_acc.get(uniprot_id),
-                    taxonomy_id=up_id_to_tax_id.get(uniprot_id),
-                )
+        uniprot_id_to_protein = {}
+        it = tqdm(protein_tuples, desc='HIPPIE: making protein models')
+        for uniprot_id, uniprot_entry_name, entrez_id, tax_id, hgnc_id, symbol in it:
+            uniprot_id_to_protein[uniprot_id] = Protein(
+                entrez_id=entrez_id,
+                uniprot_entry_name=uniprot_entry_name,
+                uniprot_id=uniprot_id,
+                taxonomy_id=tax_id,
+                symbol=symbol,
+                hgnc_id=hgnc_id,
+            )
+        logger.info('Made entrez to protein dict')
 
         logger.info('committing protein models')
         time_commit_proteins_start = time.time()
-        self.session.add_all(list(entrez_protein.values()))
+        self.session.add_all(list(uniprot_id_to_protein.values()))
         self.session.commit()
         logger.info('committed protein models in %.2f seconds', time.time() - time_commit_proteins_start)
 
-        _columns = ['source_entrez_id', 'target_entrez_id', 'confidence']
-        for idx, (source_entrez_id, target_entrez_id, confidence) in tqdm(df[_columns].iterrows(), total=len(df.index)):
+        _columns = ['source_uniprot_id', 'target_uniprot_id', 'confidence']
+        it = tqdm(df[_columns].values, total=len(df.index), desc='HIPPIE: making PPI models')
+        for source_uniprot_id, target_uniprot_id, confidence in it:
             interaction = Interaction(
-                source=entrez_protein.get(source_entrez_id),
-                target=entrez_protein.get(target_entrez_id),
+                source=uniprot_id_to_protein[source_uniprot_id],
+                target=uniprot_id_to_protein[target_uniprot_id],
                 confidence=confidence,
             )
             self.session.add(interaction)
@@ -107,16 +97,14 @@ class Manager(AbstractManager, BELManagerMixin, FlaskMixin):
         self.session.commit()
         logger.info('committed interaction models in %.2f seconds', time.time() - time_commit_interactions_start)
 
-    def to_bel(self) -> BELGraph:
+    def to_bel(self, namespace: Optional[str] = None) -> BELGraph:
         """Convert to a BEL graph."""
         bel_graph = BELGraph(
             name='HIPPIE',
             version='2.1',
         )
 
-        # TODO should rely on entrez package to deal with semantics
-
         for interaction in tqdm(self._get_query(Interaction), total=self.count_interactions(), desc='interactions'):
-            interaction.add_to_bel_graph(bel_graph)
+            interaction.add_to_bel_graph(bel_graph, namespace=namespace)
 
         return bel_graph
