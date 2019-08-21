@@ -28,6 +28,8 @@ class Protein(Base):
     __tablename__ = PROTEIN_TABLE_NAME
     id = Column(Integer, primary_key=True)
 
+    symbol = Column(String, nullable=True, index=True)
+    hgnc_id = Column(String, nullable=True, index=True)
     entrez_id = Column(String, nullable=False, index=True, unique=True)
     uniprot_id = Column(String, nullable=True)
     uniprot_accession = Column(String, nullable=True)
@@ -44,7 +46,7 @@ class Protein(Base):
         )
 
     def __repr__(self):  # noqa: D105
-        return f'<Protein entrez_id={self.entrez_id}, uniprot_id={self.uniprot_id}>'
+        return f'<Protein symbol={self.symbol}, entrez_id={self.entrez_id}, uniprot_id={self.uniprot_id}>'
 
 
 class Interaction(Base):

@@ -7,13 +7,13 @@ import logging
 import time
 from typing import Mapping, Optional
 
+from pybel import BELGraph
 from tqdm import tqdm
 
 from bio2bel import AbstractManager
 from bio2bel.manager.bel_manager import BELManagerMixin
 from bio2bel.manager.flask_manager import FlaskMixin
 from bio2bel_uniprot import get_slim_mappings_df
-from pybel import BELGraph
 from .constants import MODULE
 from .models import Base, Interaction, Protein
 from .parser import get_df
@@ -54,7 +54,7 @@ class Manager(AbstractManager, BELManagerMixin, FlaskMixin):
 
     def populate(self, url: Optional[str] = None, uniprot_url: Optional[str] = None) -> None:
         """Populate the database."""
-        print('get uniprot mappings')
+
         up_mappings_df = get_slim_mappings_df(url=uniprot_url)
         up_id_to_up_acc = {}
         up_id_to_tax_id = {}
@@ -62,7 +62,7 @@ class Manager(AbstractManager, BELManagerMixin, FlaskMixin):
             up_id_to_up_acc[up_id] = up_acc
             up_id_to_tax_id[up_id] = tax_id
 
-        print('get hippie')
+        logger.info('Getting HIPPIE data')
         df = get_df(url=url)
 
         entrez_protein = {
@@ -74,6 +74,8 @@ class Manager(AbstractManager, BELManagerMixin, FlaskMixin):
             df[['source_uniprot_id', 'source_entrez_id']].iterrows(),
             df[['target_uniprot_id', 'target_entrez_id']].iterrows(),
         )
+
+        # TODO reagon either map uniprot id or entrez id to HGNC and add it to protein model
 
         for idx, (uniprot_id, entrez_id) in tqdm(i, total=(2 * len(df.index)), desc='proteins'):
             protein = entrez_protein.get(entrez_id)
