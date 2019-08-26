@@ -53,9 +53,9 @@ def get_df_preprocessed(url=None, uniprot_url=None) -> pd.DataFrame:
     entrez_id_to_hgnc_symbol = hgnc_manager.build_entrez_id_to_hgnc_symbol_mapping()
     entrez_id_to_hgnc_id = hgnc_manager.build_entrez_id_to_hgnc_id_mapping()
 
-    df['source_hgnc_id'] = df['source_entrez_id'].map(entrez_id_to_hgnc_symbol.get)
-    df['source_hgnc_symbol'] = df['source_entrez_id'].map(entrez_id_to_hgnc_id.get)
-    df['target_hgnc_id'] = df['target_entrez_id'].map(entrez_id_to_hgnc_symbol.get)
-    df['target_hgnc_symbol'] = df['target_entrez_id'].map(entrez_id_to_hgnc_id.get)
+    df['source_hgnc_symbol'] = df['source_entrez_id'].map(entrez_id_to_hgnc_symbol.get)
+    df['source_hgnc_id'] = df['source_entrez_id'].map(entrez_id_to_hgnc_id.get)
+    df['target_hgnc_symbol'] = df['target_entrez_id'].map(entrez_id_to_hgnc_symbol.get)
+    df['target_hgnc_id'] = df['target_entrez_id'].map(entrez_id_to_hgnc_id.get)
 
     return df
